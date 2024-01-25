@@ -44,13 +44,13 @@
 #define THREAD_HPP_
 
 /**
- *  The default in the C++ Wrapper classes is to use the C++ string class. 
- *  If you do not want this, define the following in your makefile or 
+ *  The default in the C++ Wrapper classes is to use the C++ string class.
+ *  If you do not want this, define the following in your makefile or
  *  project, and the Thread class will default to using character arrays
  *  instead of C++ strings.
  *
  *  @note If you define this, you also must define CPP_FREERTOS_NO_EXCEPTIONS.
- *  Some classes throw exceptions if they cannot be constructed, and the 
+ *  Some classes throw exceptions if they cannot be constructed, and the
  *  exceptions they throw depend on C++ strings.
  */
 #ifndef CPP_FREERTOS_NO_CPP_STRINGS
@@ -64,6 +64,9 @@
 
 namespace cpp_freertos {
 
+#if ( configSUPPORT_STATIC_ALLOCATION == 0 )
+#error "Only FreeRTOS's Static Allocation is supported"
+#endif
 
 /**
  *  Wrapper class around FreeRTOS's implementation of a task.
@@ -97,10 +100,12 @@ class Thread {
 #ifndef CPP_FREERTOS_NO_CPP_STRINGS
         Thread( const std::string Name,
                 uint16_t StackDepth,
+                StackType_t * const StackBuffer
                 UBaseType_t Priority);
 #else
         Thread( const char *Name,
                 uint16_t StackDepth,
+                StackType_t * const StackBuffer,
                 UBaseType_t Priority);
 #endif
 
@@ -111,23 +116,24 @@ class Thread {
          *  @param Priority FreeRTOS priority of this Thread.
          */
         Thread( uint16_t StackDepth,
+                StackType_t * const StackBuffer,
                 UBaseType_t Priority);
 
         /**
          *  Starts a thread.
          *
-         *  This is the API call that actually starts the thread running. 
-         *  It creates a backing FreeRTOS task. By separating object creation 
-         *  from starting the Thread, it solves the pure virtual fuction call 
-         *  failure case. If we attempt to automatically call xTaskCreate 
-         *  from the base class constructor, in certain conditions the task 
-         *  starts to run "before" the derived class is constructed! So we 
+         *  This is the API call that actually starts the thread running.
+         *  It creates a backing FreeRTOS task. By separating object creation
+         *  from starting the Thread, it solves the pure virtual fuction call
+         *  failure case. If we attempt to automatically call xTaskCreate
+         *  from the base class constructor, in certain conditions the task
+         *  starts to run "before" the derived class is constructed! So we
          *  don't do that anymore.
          *
-         *  This may be called from your ctor once you have completed 
-         *  your objects construction (so as the last step). 
+         *  This may be called from your ctor once you have completed
+         *  your objects construction (so as the last step).
          *
-         *  This should only be called once ever! 
+         *  This should only be called once ever!
          */
         bool Start();
 
@@ -159,7 +165,7 @@ class Thread {
         /**
          *  Start the scheduler.
          *
-         *  @note You need to use this call. Do NOT directly call 
+         *  @note You need to use this call. Do NOT directly call
          *  vTaskStartScheduler while using this library.
          */
         static inline void StartScheduler()
@@ -174,7 +180,7 @@ class Thread {
          *  @note Please see the FreeRTOS documentation regarding constraints
          *  with the implementation of this.
          *
-         *  @note You need to use this call. Do NOT directly call 
+         *  @note You need to use this call. Do NOT directly call
          *  vTaskEndScheduler while using this library.
          */
         static inline void EndScheduler()
@@ -187,7 +193,7 @@ class Thread {
         /**
          *  Suspend this thread.
          *
-         *  @note While a Thread can Suspend() itself, it cannot Resume() 
+         *  @note While a Thread can Suspend() itself, it cannot Resume()
          *  itself, becauseit's suspended.
          */
         inline void Suspend()
@@ -290,16 +296,16 @@ class Thread {
 
 #if (INCLUDE_vTaskDelete == 1)
         /**
-         *  Called on exit from your Run() routine. 
-         *  
+         *  Called on exit from your Run() routine.
+         *
          *  It is optional whether you implement this or not.
          *
-         *  If you allow your Thread to exit its Run method, 
-         *  implementing a Cleanup method allows you to call 
-         *  your Thread's destructor. If you decide to call delete 
-         *  in your Cleanup function, be aware that additional 
-         *  derived classes shouldn't call delete. 
-         */ 
+         *  If you allow your Thread to exit its Run method,
+         *  implementing a Cleanup method allows you to call
+         *  your Thread's destructor. If you decide to call delete
+         *  in your Cleanup function, be aware that additional
+         *  derived classes shouldn't call delete.
+         */
         virtual void Cleanup();
 #else
         /**
@@ -394,6 +400,8 @@ class Thread {
          *  Stack depth of this Thread, in words.
          */
         const uint16_t StackDepth;
+        StackType_t * const StackBuffer;
+        StaticTask_t TaskBuffer;
 
         /**
          *  A saved / cached copy of what the Thread's priority is.
@@ -404,11 +412,11 @@ class Thread {
          *  Flag whether or not the Thread was started.
          */
         bool ThreadStarted;
-        
+
         /**
          *  Make sure no one calls Start more than once.
          */
-        static MutexStandard StartGuardLock;
+        // static MutexStandard StartGuardLock;
 
         /**
          *  Adapter function that allows you to write a class
@@ -449,7 +457,7 @@ class Thread {
 
     /**
      *  The Thread class and the ConditionVariable class are interdependent.
-     *  If we allow the ConditionVariable class to access the internals of 
+     *  If we allow the ConditionVariable class to access the internals of
      *  the Thread class, we can reduce the public interface, which is a
      *  good thing.
      */
@@ -462,4 +470,3 @@ class Thread {
 
 }
 #endif
-

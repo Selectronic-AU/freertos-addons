@@ -59,7 +59,7 @@ Mutex::~Mutex()
 
 MutexStandard::MutexStandard()
 {
-    handle = xSemaphoreCreateMutex();
+    handle = xSemaphoreCreateMutexStatic(&MutexBuffer);
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS

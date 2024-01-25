@@ -45,6 +45,7 @@
 
 using namespace cpp_freertos;
 
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 Tasklet::Tasklet()
 {
@@ -129,3 +130,4 @@ bool Tasklet::ScheduleFromISR(  uint32_t parameter,
     }
 }
 
+#endif // ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )

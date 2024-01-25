@@ -47,7 +47,7 @@
  *  C++ exceptions are used by default when constructors fail.
  *  If you do not want this behavior, define the following in your makefile
  *  or project. Note that in most / all cases when a constructor fails,
- *  it's a fatal error. In the cases when you've defined this, the new 
+ *  it's a fatal error. In the cases when you've defined this, the new
  *  default behavior will be to issue a configASSERT() instead.
  */
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -188,6 +188,8 @@ class Semaphore {
          *  directly created, this is a base class only.
          */
         Semaphore();
+
+        StaticSemaphore_t semaphore_buffer_;
 };
 
 
@@ -212,6 +214,7 @@ class BinarySemaphore : public Semaphore {
         explicit BinarySemaphore(bool set = false);
 };
 
+#if ( configUSE_COUNTING_SEMAPHORES == 1 )
 
 /**
  *  Wrapper class for Counting Semaphores.
@@ -236,6 +239,7 @@ class CountingSemaphore : public Semaphore {
         CountingSemaphore(UBaseType_t maxCount, UBaseType_t initialCount);
 };
 
+#endif  // ( configUSE_COUNTING_SEMAPHORES == 1 )
 
 }
 #endif

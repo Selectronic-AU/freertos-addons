@@ -45,6 +45,7 @@
 
 using namespace cpp_freertos;
 
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 WorkItem::WorkItem(bool freeAfterComplete)
     : FreeItemAfterCompleted(freeAfterComplete)
@@ -207,4 +208,4 @@ void WorkQueue::CWorkerThread::Run()
     ParentWorkQueue->ThreadComplete->Give();
 }
 
-
+#endif // ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )

@@ -51,11 +51,12 @@ Timer::Timer(   const char * const TimerName,
                 bool Periodic
                 )
 {
-    handle = xTimerCreate(  TimerName,
+    handle = xTimerCreateStatic(  TimerName,
                             PeriodInTicks,
                             Periodic ? pdTRUE : pdFALSE,
                             this,
-                            TimerCallbackFunctionAdapter);
+                            TimerCallbackFunctionAdapter,
+                            &timer_buffer_);
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -71,11 +72,12 @@ Timer::Timer(   TickType_t PeriodInTicks,
                 bool Periodic
                 )
 {
-    handle = xTimerCreate(  "Default",
+    handle = xTimerCreateStatic(  "Default",
                             PeriodInTicks,
                             Periodic ? pdTRUE : pdFALSE,
                             this,
-                            TimerCallbackFunctionAdapter);
+                            TimerCallbackFunctionAdapter,
+                            &timer_buffer_);
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS

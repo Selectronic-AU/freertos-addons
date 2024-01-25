@@ -45,6 +45,7 @@
 
 using namespace cpp_freertos;
 
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 ReadWriteLock::ReadWriteLock()
     : ReadCount(0)
@@ -227,3 +228,5 @@ void ReadWriteLockPreferWriter::WriterUnlock()
 
     xSemaphoreGive(WriteLock);
 }
+
+#endif // ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )

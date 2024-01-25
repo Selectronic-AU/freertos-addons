@@ -47,7 +47,7 @@
  *  C++ exceptions are used by default when constructors fail.
  *  If you do not want this behavior, define the following in your makefile
  *  or project. Note that in most / all cases when a constructor fails,
- *  it's a fatal error. In the cases when you've defined this, the new 
+ *  it's a fatal error. In the cases when you've defined this, the new
  *  default behavior will be to issue a configASSERT() instead.
  */
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -131,7 +131,7 @@ class Queue {
          *  @param itemSize Size of an item in a queue.
          *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
          */
-        Queue(UBaseType_t maxItems, UBaseType_t itemSize);
+        Queue(UBaseType_t maxItems, UBaseType_t itemSize, uint8_t * buffer);
 
         /**
          *  Our destructor.
@@ -248,6 +248,10 @@ class Queue {
          *  FreeRTOS queue handle.
          */
         QueueHandle_t handle;
+
+    private:
+        StaticQueue_t queue_buffer_;
+
 };
 
 
@@ -276,7 +280,7 @@ class Deque : public Queue {
          *  @param itemSize Size of an item in a queue.
          *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
          */
-        Deque(UBaseType_t maxItems, UBaseType_t itemSize);
+        Deque(UBaseType_t maxItems, UBaseType_t itemSize, uint8_t * buffer);
 
         /**
          *  Add an item to the front of the queue. This will result in
@@ -328,7 +332,7 @@ class BinaryQueue : public Queue {
          *  @param itemSize Size of an item in a queue.
          *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
          */
-        explicit BinaryQueue(UBaseType_t itemSize);
+        explicit BinaryQueue(UBaseType_t itemSize, uint8_t * buffer);
 
          /**
           *  Add an item to the queue.

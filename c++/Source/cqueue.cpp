@@ -46,9 +46,9 @@
 using namespace cpp_freertos;
 
 
-Queue::Queue(UBaseType_t maxItems, UBaseType_t itemSize)
+Queue::Queue(UBaseType_t maxItems, UBaseType_t itemSize, uint8_t *buffer)
 {
-    handle = xQueueCreate(maxItems, itemSize);
+    handle = xQueueCreateStatic(maxItems, itemSize, buffer, &queue_buffer_);
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -170,8 +170,8 @@ UBaseType_t Queue::NumSpacesLeft()
 }
 
 
-Deque::Deque(UBaseType_t maxItems, UBaseType_t itemSize)
-    : Queue(maxItems, itemSize)
+Deque::Deque(UBaseType_t maxItems, UBaseType_t itemSize, uint8_t * buffer)
+    : Queue(maxItems, itemSize, buffer)
 {
 }
 
@@ -196,8 +196,8 @@ bool Deque::EnqueueToFrontFromISR(void *item, BaseType_t *pxHigherPriorityTaskWo
 }
 
 
-BinaryQueue::BinaryQueue(UBaseType_t itemSize)
-    : Queue(1, itemSize)
+BinaryQueue::BinaryQueue(UBaseType_t itemSize, uint8_t * buffer)
+    : Queue(1, itemSize, buffer)
 {
 }
 

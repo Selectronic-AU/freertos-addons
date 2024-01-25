@@ -43,6 +43,7 @@
 
 using namespace cpp_freertos;
 
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 EventGroup::EventGroup()
 {
@@ -57,6 +58,7 @@ EventGroup::EventGroup()
     }
 
 }
+#endif // ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 
 #if( configSUPPORT_STATIC_ALLOCATION == 1 )

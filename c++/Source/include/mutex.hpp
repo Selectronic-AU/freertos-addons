@@ -47,7 +47,7 @@
  *  C++ exceptions are used by default when constructors fail.
  *  If you do not want this behavior, define the following in your makefile
  *  or project. Note that in most / all cases when a constructor fails,
- *  it's a fatal error. In the cases when you've defined this, the new 
+ *  it's a fatal error. In the cases when you've defined this, the new
  *  default behavior will be to issue a configASSERT() instead.
  */
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -199,6 +199,9 @@ class MutexStandard : public Mutex {
          *           if it fails, did you call Lock() first?)
          */
         virtual bool Unlock();
+
+    private:
+        StaticSemaphore_t MutexBuffer;
 };
 
 

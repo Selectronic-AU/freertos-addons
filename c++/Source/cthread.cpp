@@ -48,7 +48,7 @@ using namespace cpp_freertos;
 
 
 volatile bool Thread::SchedulerActive = false;
-MutexStandard Thread::StartGuardLock;
+// MutexStandard Thread::StartGuardLock;
 
 
 //
@@ -58,9 +58,11 @@ MutexStandard Thread::StartGuardLock;
 
 Thread::Thread( const std::string pcName,
                 uint16_t usStackDepth,
+                StackType_t * const puxStackBuffer,
                 UBaseType_t uxPriority)
-    :   Name(pcName), 
-        StackDepth(usStackDepth), 
+    :   Name(pcName),
+        StackDepth(usStackDepth),
+        StackBuffer(puxStackBuffer),
         Priority(uxPriority),
         ThreadStarted(false)
 {
@@ -71,9 +73,11 @@ Thread::Thread( const std::string pcName,
 
 
 Thread::Thread( uint16_t usStackDepth,
+                StackType_t * const puxStackBuffer,
                 UBaseType_t uxPriority)
-    :   Name("Default"), 
-        StackDepth(usStackDepth), 
+    :   Name("Default"),
+        StackDepth(usStackDepth),
+        StackBuffer(puxStackBuffer),
         Priority(uxPriority),
         ThreadStarted(false)
 {
@@ -89,8 +93,10 @@ Thread::Thread( uint16_t usStackDepth,
 
 Thread::Thread( const char *pcName,
                 uint16_t usStackDepth,
+                StackType_t * const puxStackBuffer,
                 UBaseType_t uxPriority)
     :   StackDepth(usStackDepth),
+        StackBuffer(puxStackBuffer),
         Priority(uxPriority),
         ThreadStarted(false)
 {
@@ -109,8 +115,10 @@ Thread::Thread( const char *pcName,
 
 
 Thread::Thread( uint16_t usStackDepth,
+                StackType_t * const puxStackBuffer,
                 UBaseType_t uxPriority)
     :   StackDepth(usStackDepth),
+        StackBuffer(puxStackBuffer),
         Priority(uxPriority),
         ThreadStarted(false)
 {
@@ -127,18 +135,18 @@ bool Thread::Start()
 {
     //
     //  If the Scheduler is on, we need to lock before checking
-    //  the ThreadStarted variable. We'll leverage the LockGuard 
-    //  pattern, so we can create the guard and just forget it. 
-    //  Leaving scope, including the return, will automatically 
+    //  the ThreadStarted variable. We'll leverage the LockGuard
+    //  pattern, so we can create the guard and just forget it.
+    //  Leaving scope, including the return, will automatically
     //  unlock it.
     //
     if (SchedulerActive) {
 
-        LockGuard guard (StartGuardLock);
+        // LockGuard guard (StartGuardLock);
 
         if (ThreadStarted)
             return false;
-        else 
+        else
             ThreadStarted = true;
     }
     //
@@ -148,29 +156,31 @@ bool Thread::Start()
 
         if (ThreadStarted)
             return false;
-        else 
+        else
             ThreadStarted = true;
     }
 
 #ifndef CPP_FREERTOS_NO_CPP_STRINGS
 
-    BaseType_t rc = xTaskCreate(TaskFunctionAdapter,
+    handle = xTaskCreateStatic(TaskFunctionAdapter,
                                 Name.c_str(),
                                 StackDepth,
                                 this,
                                 Priority,
-                                &handle);
-#else 
+                                StackBuffer,
+                                &TaskBuffer);
+#else
 
-    BaseType_t rc = xTaskCreate(TaskFunctionAdapter,
+    handle = xTaskCreateStatic(TaskFunctionAdapter,
                                 Name,
                                 StackDepth,
                                 this,
                                 Priority,
-                                &handle);
+                                StackBuffer,
+                                &TaskBuffer);
 #endif
 
-    return rc != pdPASS ? false : true;
+    return handle ? false : true;
 }
 
 
@@ -260,7 +270,7 @@ bool Thread::Wait(  ConditionVariable &Cv,
     //  will call Thread::Signal, which will release the semaphore.
     //
     bool timed_out = ThreadWaitSem.Take(Timeout);
-    
+
     //
     //  Grab the external lock again, as per cv semantics.
     //
@@ -271,5 +281,3 @@ bool Thread::Wait(  ConditionVariable &Cv,
 
 
 #endif
-
-
