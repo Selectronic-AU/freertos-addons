@@ -61,6 +61,9 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
 
 namespace cpp_freertos {
 
@@ -188,6 +191,13 @@ class Semaphore {
          *  directly created, this is a base class only.
          */
         Semaphore();
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+        /**
+         * Underlying static semaphore.
+         */
+        StaticSemaphore_t semaphore_buffer;
+#endif
 };
 
 
@@ -212,6 +222,7 @@ class BinarySemaphore : public Semaphore {
         explicit BinarySemaphore(bool set = false);
 };
 
+#if ( configUSE_COUNTING_SEMAPHORES == 1 )
 
 /**
  *  Wrapper class for Counting Semaphores.
@@ -236,6 +247,7 @@ class CountingSemaphore : public Semaphore {
         CountingSemaphore(UBaseType_t maxCount, UBaseType_t initialCount);
 };
 
+#endif
 
 }
 #endif
