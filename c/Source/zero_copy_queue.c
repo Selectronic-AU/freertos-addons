@@ -76,8 +76,8 @@ ZeroCopyQueue_t ZcqCreateQueue( int ItemSize,
 
     zcq->Pool = CreateMemoryPool(ItemSize, ItemCount, Alignment);
     if (zcq->Pool == NULL) {
-        free(zcq);
         vQueueDelete(zcq->Handle);
+        free(zcq);
         return NULL;
     }
 
