@@ -95,6 +95,7 @@ void MemoryPool::CalculateItemSize()
     }
 }
 
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 MemoryPool::MemoryPool( int itemSize,
                         int itemCount,
@@ -120,10 +121,11 @@ MemoryPool::MemoryPool( int itemSize,
         FreeItems.push_back(address);
         address += ItemSize;
     }
-
-    Lock = new MutexStandard();
 }
 
+#endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
 
 MemoryPool::MemoryPool( int itemSize,
                         void *preallocatedMemory,
@@ -144,14 +146,14 @@ MemoryPool::MemoryPool( int itemSize,
         address += ItemSize;
         preallocatedMemorySize -= ItemSize;
     }
-
-    Lock = new MutexStandard();
 }
+
+#endif /* configSUPPORT_STATIC_ALLOCATION */
 
 
 void *MemoryPool::Allocate()
 {
-    LockGuard guard(*Lock);
+    LockGuard guard(Lock);
 
     if (FreeItems.empty())
         return NULL;
@@ -165,7 +167,7 @@ void *MemoryPool::Allocate()
 
 void MemoryPool::Free(void *item)
 {
-    LockGuard guard(*Lock);
+    LockGuard guard(Lock);
     FreeItems.push_back(item);
 }
 
@@ -184,7 +186,7 @@ void MemoryPool::AddMemory(int itemCount)
 
     for (int i = 0; i < itemCount; i++) {
 
-        LockGuard guard(*Lock);
+        LockGuard guard(Lock);
 
         FreeItems.push_back(address);
         address += ItemSize;
@@ -199,7 +201,7 @@ void MemoryPool::AddMemory( void *preallocatedMemory,
 
     while (preallocatedMemorySize >= ItemSize) {
 
-        LockGuard guard(*Lock);
+        LockGuard guard(Lock);
 
         FreeItems.push_back(address);
         address += ItemSize;
