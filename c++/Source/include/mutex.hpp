@@ -61,6 +61,10 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
+
 namespace cpp_freertos {
 
 
@@ -199,6 +203,15 @@ class MutexStandard : public Mutex {
          *           if it fails, did you call Lock() first?)
          */
         virtual bool Unlock();
+
+    private:
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+        /**
+         * Underlying static semaphore.
+         */
+        StaticSemaphore_t MutexBuffer;
+#endif
 };
 
 
@@ -247,6 +260,15 @@ class MutexRecursive : public Mutex {
          *           if it fails, did you call Lock() first?)
          */
         virtual bool Unlock();
+
+    private:
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+        /**
+         * Underlying static semaphore.
+         */
+        StaticSemaphore_t MutexBuffer;
+#endif
 };
 
 #endif
