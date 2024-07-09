@@ -48,7 +48,11 @@ using namespace cpp_freertos;
 
 Tasklet::Tasklet()
 {
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+    DtorLock = xSemaphoreCreateBinaryStatic(&DtorLockSemaphoreBuffer);
+#else
     DtorLock = xSemaphoreCreateBinary();
+#endif
 
     if (DtorLock == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
