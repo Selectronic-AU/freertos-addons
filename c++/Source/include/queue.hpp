@@ -336,7 +336,7 @@ class BinaryQueue : public Queue {
           *  @param item The item you are adding.
           *  @return true always, because of overwrite.
           */
-        virtual bool Enqueue(void *item);
+        virtual bool Enqueue(const void *item);
 
          /**
           *  Add an item to the queue in ISR context.
@@ -346,7 +346,7 @@ class BinaryQueue : public Queue {
           *         rescheduling event.
           *  @return true always, because of overwrite.
           */
-        virtual bool EnqueueFromISR(void *item, BaseType_t *pxHigherPriorityTaskWoken);
+        virtual bool EnqueueFromISR(const void *item, BaseType_t *pxHigherPriorityTaskWoken);
 };
 
 

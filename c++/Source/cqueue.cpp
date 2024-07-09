@@ -202,14 +202,14 @@ BinaryQueue::BinaryQueue(UBaseType_t itemSize)
 }
 
 
-bool BinaryQueue::Enqueue(void *item)
+bool BinaryQueue::Enqueue(const void *item)
 {
     (void)xQueueOverwrite(handle, item);
     return true;
 }
 
 
-bool BinaryQueue::EnqueueFromISR(void *item, BaseType_t *pxHigherPriorityTaskWoken)
+bool BinaryQueue::EnqueueFromISR(const void *item, BaseType_t *pxHigherPriorityTaskWoken)
 {
     (void)xQueueOverwriteFromISR(handle, item, pxHigherPriorityTaskWoken);
     return true;
