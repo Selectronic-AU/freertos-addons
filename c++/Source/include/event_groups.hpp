@@ -59,6 +59,9 @@
 #include "FreeRTOS.h"
 #include "event_groups.h"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
 
 namespace cpp_freertos {
 
@@ -122,12 +125,6 @@ class EventGroup {
          */
         EventGroup();
 
-#if( configSUPPORT_STATIC_ALLOCATION == 1 )
-        /**
-         *  Construct a Event Group with static allocation
-         */
-        EventGroup(StaticEventGroup_t *pxEventGroupBuffer);
-#endif
         /**
          *  Allow two or more tasks to use an event group to sync each other.
          *
@@ -241,6 +238,7 @@ class EventGroup {
         */
         EventBits_t GetBits();
 
+        #if ( ( configUSE_TRACE_FACILITY == 1 ) && ( INCLUDE_xTimerPendFunctionCall == 1 ) && ( configUSE_TIMERS == 1 ) )
         /**
          *  Returns the current value of the event bits (event flags) in an
          *  event group from ISR context.
@@ -249,6 +247,8 @@ class EventGroup {
          *  time EventGroup::GetBitsFromISR was called.
          */
         EventBits_t GetBitsFromISR();
+
+        #endif
 
         /**
          *  Set bits (flags) within an event group.
@@ -302,6 +302,14 @@ class EventGroup {
          *  FreeRTOS Event Group handle.
          */
         EventGroupHandle_t handle;
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+        /**
+         * FreeRTOS Event Group structure for static allocation of storage
+         * for data associated with the event group.
+         */
+    StaticEventGroup_t event_group_data;
+#endif
 
 };
 
