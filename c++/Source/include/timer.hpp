@@ -62,6 +62,9 @@
 #include "FreeRTOS.h"
 #include "timers.h"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
 
 namespace cpp_freertos {
 
@@ -280,6 +283,13 @@ class Timer {
          *  Reference to the underlying timer handle.
          */
         TimerHandle_t handle;
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+        /**
+         * Underlying static timer.
+         */
+        StaticTimer_t timer_buffer;
+#endif
 
         /**
          *  Adapter function that allows you to write a class
