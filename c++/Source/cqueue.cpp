@@ -45,6 +45,7 @@
 
 using namespace cpp_freertos;
 
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 Queue::Queue(UBaseType_t maxItems, UBaseType_t itemSize)
 {
@@ -59,6 +60,24 @@ Queue::Queue(UBaseType_t maxItems, UBaseType_t itemSize)
     }
 }
 
+#endif
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+Queue::Queue(UBaseType_t maxItems, UBaseType_t itemSize, void *buffer)
+{
+    handle = xQueueCreateStatic(maxItems, itemSize, static_cast<uint8_t*>(buffer), &queue_buffer);
+
+    if (handle == NULL) {
+#ifndef CPP_FREERTOS_NO_EXCEPTIONS
+        throw QueueCreateException();
+#else
+        configASSERT(!"Queue Constructor Failed");
+#endif
+    }
+}
+
+#endif
 
 Queue::~Queue()
 {
@@ -170,10 +189,24 @@ UBaseType_t Queue::NumSpacesLeft()
 }
 
 
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
 Deque::Deque(UBaseType_t maxItems, UBaseType_t itemSize)
     : Queue(maxItems, itemSize)
 {
 }
+
+#endif
+
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+Deque::Deque(UBaseType_t maxItems, UBaseType_t itemSize, uint8_t * buffer)
+    : Queue(maxItems, itemSize, buffer)
+{
+}
+
+#endif
 
 
 bool Deque::EnqueueToFront(void *item, TickType_t Timeout)
@@ -196,10 +229,25 @@ bool Deque::EnqueueToFrontFromISR(void *item, BaseType_t *pxHigherPriorityTaskWo
 }
 
 
+
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
 BinaryQueue::BinaryQueue(UBaseType_t itemSize)
     : Queue(1, itemSize)
 {
 }
+
+#endif
+
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+BinaryQueue::BinaryQueue(UBaseType_t itemSize, uint8_t * buffer)
+    : Queue(1, itemSize, buffer)
+{
+}
+
+#endif
 
 
 bool BinaryQueue::Enqueue(const void *item)
