@@ -141,7 +141,7 @@ class RootThread : public Thread {
                         break;
 
                     case 3: {
-                        char nameBuf[10];
+                        char nameBuf[14];
                         sprintf(nameBuf, "dy%d", ++threadCnt);
                         cout << GetName() << " Creating " << nameBuf << endl;
                         dt = new DynamicThread(nameBuf, 1);
