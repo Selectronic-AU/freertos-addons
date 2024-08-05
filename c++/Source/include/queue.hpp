@@ -61,6 +61,9 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
 
 namespace cpp_freertos {
 
@@ -123,6 +126,9 @@ class Queue {
     //
     /////////////////////////////////////////////////////////////////////////
     public:
+
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
         /**
          *  Our constructor.
          *
@@ -132,6 +138,23 @@ class Queue {
          *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
          */
         Queue(UBaseType_t maxItems, UBaseType_t itemSize);
+
+#endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+        /**
+         *  Our constructor.
+         *
+         *  @throws QueueCreateException
+         *  @param maxItems Maximum number of items this queue can hold.
+         *  @param itemSize Size of an item in a queue.
+         *  @param buffer A buffer to use for the queue.
+         *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
+         */
+        Queue(UBaseType_t maxItems, UBaseType_t itemSize, void *buffer);
+
+#endif /* configSUPPORT_STATIC_ALLOCATION */
 
         /**
          *  Our destructor.
@@ -248,6 +271,14 @@ class Queue {
          *  FreeRTOS queue handle.
          */
         QueueHandle_t handle;
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+        /**
+         *  FreeRTOS static queue data structure.
+         */
+        StaticQueue_t queue_buffer;
+
+#endif
 };
 
 
@@ -268,6 +299,9 @@ class Deque : public Queue {
     //
     /////////////////////////////////////////////////////////////////////////
     public:
+
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
         /**
          *  Our constructor.
          *
@@ -277,6 +311,23 @@ class Deque : public Queue {
          *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
          */
         Deque(UBaseType_t maxItems, UBaseType_t itemSize);
+
+#endif
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+        /**
+         *  Our constructor.
+         *
+         *  @throws QueueCreateException
+         *  @param maxItems Maximum number of items thsi queue can hold.
+         *  @param itemSize Size of an item in a queue.
+         *  @param buffer A buffer to use for the queue.
+         *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
+         */
+        Deque(UBaseType_t maxItems, UBaseType_t itemSize, uint8_t * buffer);
+
+#endif
 
         /**
          *  Add an item to the front of the queue. This will result in
@@ -321,6 +372,9 @@ class BinaryQueue : public Queue {
     //
     /////////////////////////////////////////////////////////////////////////
     public:
+
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
         /**
          *  Our constructor.
          *
@@ -330,13 +384,29 @@ class BinaryQueue : public Queue {
          */
         explicit BinaryQueue(UBaseType_t itemSize);
 
+#endif
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+        /**
+         *  Our constructor.
+         *
+         *  @throws QueueCreateException
+         *  @param itemSize Size of an item in a queue.
+         *  @param buffer A buffer to use for the queue.
+         *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
+         */
+        explicit BinaryQueue(UBaseType_t itemSize, uint8_t * buffer);
+
+#endif
+
          /**
           *  Add an item to the queue.
           *
           *  @param item The item you are adding.
           *  @return true always, because of overwrite.
           */
-        virtual bool Enqueue(void *item);
+        virtual bool Enqueue(const void *item);
 
          /**
           *  Add an item to the queue in ISR context.
@@ -346,7 +416,7 @@ class BinaryQueue : public Queue {
           *         rescheduling event.
           *  @return true always, because of overwrite.
           */
-        virtual bool EnqueueFromISR(void *item, BaseType_t *pxHigherPriorityTaskWoken);
+        virtual bool EnqueueFromISR(const void *item, BaseType_t *pxHigherPriorityTaskWoken);
 };
 
 

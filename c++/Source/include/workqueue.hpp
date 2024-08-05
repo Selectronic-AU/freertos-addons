@@ -47,6 +47,9 @@
 #include "queue.hpp"
 #include "semaphore.hpp"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
 
 namespace cpp_freertos {
 
@@ -134,6 +137,7 @@ class WorkQueue {
     //
     /////////////////////////////////////////////////////////////////////////
     public:
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
         /**
          *  Constructor to create a named WorkQueue.
          *
@@ -162,6 +166,48 @@ class WorkQueue {
         WorkQueue(  uint16_t StackDepth = DEFAULT_WORK_QUEUE_STACK_SIZE,
                     UBaseType_t Priority = DEFAULT_WORK_QUEUE_PRIORITY,
                     UBaseType_t MaxWorkItems = DEFAULT_MAX_WORK_ITEMS);
+#endif
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+        /**
+         *  Constructor to create a named WorkQueue.
+         *
+         *  @throws ThreadCreateException, QueueCreateException,
+         *          SemaphoreCreateException
+         *  @param Name Name of the thread internal to the WorkQueue.
+         *         Only useful for debugging.
+         *  @param StackDepth Number of "words" allocated for the Thread stack.
+         *  @param StackBuffer Pointer to preallocated stack space.
+         *  @param Priority FreeRTOS priority of this Thread.
+         *  @param MaxWorkItems Maximum number of WorkItems this WorkQueue can hold.
+         *  @param WorkItemsBuffer Buffer to hold WorkItems.
+         */
+        WorkQueue(  const char * const Name,
+                    uint16_t StackDepth = DEFAULT_WORK_QUEUE_STACK_SIZE,
+                    StackType_t * const StackBuffer = nullptr,
+                    UBaseType_t Priority = DEFAULT_WORK_QUEUE_PRIORITY,
+                    UBaseType_t MaxWorkItems = DEFAULT_MAX_WORK_ITEMS,
+                    WorkItem *WorkItemsBuffer = nullptr);
+
+        /**
+         *  Constructor to create an unnamed WorkQueue.
+         *
+         *  @throws ThreadCreateException, QueueCreateException,
+         *          SemaphoreCreateException
+         *  @param StackDepth Number of "words" allocated for the Thread stack.
+         *  @param StackBuffer Pointer to preallocated stack space.
+         *  @param Priority FreeRTOS priority of this Thread.
+         *  @param MaxWorkItems Maximum number of WorkItems this WorkQueue can hold.
+         *  @param WorkItemsBuffer Buffer to hold WorkItems.
+         */
+        WorkQueue(  uint16_t StackDepth = DEFAULT_WORK_QUEUE_STACK_SIZE,
+                    StackType_t * const StackBuffer = nullptr,
+                    UBaseType_t Priority = DEFAULT_WORK_QUEUE_PRIORITY,
+                    UBaseType_t MaxWorkItems = DEFAULT_MAX_WORK_ITEMS,
+                    WorkItem *WorkItemsBuffer = nullptr);
+#endif
+
 
 #if (INCLUDE_vTaskDelete == 1)
         /**
@@ -209,14 +255,34 @@ class WorkQueue {
         class CWorkerThread : public Thread {
 
             public:
+
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
                 CWorkerThread(  const char * const Name,
                                 uint16_t StackDepth,
                                 UBaseType_t Priority,
-                                WorkQueue *Parent);
+                                WorkQueue &Parent);
 
                 CWorkerThread(  uint16_t StackDepth,
                                 UBaseType_t Priority,
-                                WorkQueue *Parent);
+                                WorkQueue &Parent);
+
+#endif
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+                CWorkerThread(  const char * const Name,
+                                uint16_t StackDepth,
+                                StackType_t * const StackBuffer,
+                                UBaseType_t Priority,
+                                WorkQueue &Parent);
+
+                CWorkerThread(  uint16_t StackDepth,
+                                StackType_t * const StackBuffer,
+                                UBaseType_t Priority,
+                                WorkQueue &Parent);
+
+#endif
 
                 virtual ~CWorkerThread();
 
@@ -224,23 +290,23 @@ class WorkQueue {
                 virtual void Run();
 
             private:
-                const WorkQueue *ParentWorkQueue;
+                const WorkQueue &ParentWorkQueue;
         };
         
         /**
-         *  Pointer to our WorkerThread.
-         */
-        CWorkerThread *WorkerThread;
-
-        /**
          *  Pointer to our work queue itself.
          */
-        Queue *WorkItemQueue;
+        mutable Queue WorkItemQueue;
 
         /**
          *  Semaphore to support deconstruction without race conditions.
          */
-        BinarySemaphore *ThreadComplete;
+        mutable BinarySemaphore ThreadComplete;
+
+        /**
+         *  Pointer to our WorkerThread.
+         */
+        mutable CWorkerThread WorkerThread;
 };
 
 

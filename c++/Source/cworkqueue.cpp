@@ -62,43 +62,73 @@ bool WorkItem::FreeAfterRun()
     return FreeItemAfterCompleted;
 }
 
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 WorkQueue::WorkQueue(   const char * const Name,
                         uint16_t StackDepth,
                         UBaseType_t Priority,
                         UBaseType_t maxWorkItems)
+    :   WorkItemQueue(maxWorkItems, sizeof(WorkItem *)),
+        ThreadComplete(),
+        WorkerThread(Name, StackDepth, Priority, *this)
 {
-    //
-    //  Build the Queue first, since the Thread is going to access 
-    //  it as soon as it can, maybe before we leave this ctor.
-    //
-    WorkItemQueue = new Queue(maxWorkItems, sizeof(WorkItem *));
-    ThreadComplete = new BinarySemaphore();
-    WorkerThread = new CWorkerThread(Name, StackDepth, Priority, this);
     //
     //  Our ctor chain is complete, we can start.
     //
-    WorkerThread->Start();
+    WorkerThread.Start();
 }
 
 
 WorkQueue::WorkQueue(   uint16_t StackDepth,
                         UBaseType_t Priority,
                         UBaseType_t maxWorkItems)
+    :   WorkItemQueue(maxWorkItems, sizeof(WorkItem *)),
+        ThreadComplete(),
+        WorkerThread(StackDepth, Priority, *this)
 {
-    //
-    //  Build the Queue first, since the Thread is going to access 
-    //  it as soon as it can, maybe before we leave this ctor.
-    //
-    WorkItemQueue = new Queue(maxWorkItems, sizeof(WorkItem *));
-    ThreadComplete = new BinarySemaphore();
-    WorkerThread = new CWorkerThread(StackDepth, Priority, this);
     //
     //  Our ctor chain is complete, we can start.
     //
-    WorkerThread->Start();
+    WorkerThread.Start();
 }
 
+#endif
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+WorkQueue::WorkQueue(   const char * const Name,
+                        uint16_t StackDepth,
+                        StackType_t * const StackBuffer,
+                        UBaseType_t Priority,
+                        UBaseType_t maxWorkItems,
+                        WorkItem *WorkItemsBuffer)
+    :   WorkItemQueue(maxWorkItems, sizeof(WorkItem *), static_cast<void*>(WorkItemsBuffer)),
+        ThreadComplete(),
+        WorkerThread(Name, StackDepth, StackBuffer, Priority, *this)
+{
+    //
+    //  Our ctor chain is complete, we can start.
+    //
+    WorkerThread.Start();
+}
+
+
+WorkQueue::WorkQueue(   uint16_t StackDepth,
+                        StackType_t * const StackBuffer,
+                        UBaseType_t Priority,
+                        UBaseType_t maxWorkItems,
+                        WorkItem *WorkItemsBuffer)
+    :   WorkItemQueue(maxWorkItems, sizeof(WorkItem *), static_cast<void*>(WorkItemsBuffer)),
+        ThreadComplete(),
+        WorkerThread(StackDepth, StackBuffer, Priority, *this)
+{
+    //
+    //  Our ctor chain is complete, we can start.
+    //
+    WorkerThread.Start();
+}
+
+#endif
 
 #if (INCLUDE_vTaskDelete == 1)
 
@@ -119,19 +149,12 @@ WorkQueue::~WorkQueue()
     //  Send a message that it's time to cleanup.
     //
     WorkItem *work = NULL;
-    WorkItemQueue->Enqueue(&work);
+    WorkItemQueue.Enqueue(&work);
 
     //
     //  Wait until the thread has run enough to signal that it's done.
     //
-    ThreadComplete->Take();
-
-    //
-    //  Then delete the queue and thread. Order doesn't matter here.
-    //
-    delete WorkItemQueue;
-    delete WorkerThread;
-    delete ThreadComplete;
+    ThreadComplete.Take();
 }
 
 #endif
@@ -139,14 +162,15 @@ WorkQueue::~WorkQueue()
 
 bool WorkQueue::QueueWork(WorkItem *work)
 {
-    return WorkItemQueue->Enqueue(&work);
+    return WorkItemQueue.Enqueue(&work);
 }
 
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
 WorkQueue::CWorkerThread::CWorkerThread(const char * const Name,
                                         uint16_t StackDepth,
                                         UBaseType_t Priority,
-                                        WorkQueue *Parent)
+                                        WorkQueue &Parent)
     : Thread(Name, StackDepth, Priority), ParentWorkQueue(Parent)
 {
 }
@@ -154,10 +178,34 @@ WorkQueue::CWorkerThread::CWorkerThread(const char * const Name,
 
 WorkQueue::CWorkerThread::CWorkerThread(uint16_t StackDepth,
                                         UBaseType_t Priority,
-                                        WorkQueue *Parent)
+                                        WorkQueue &Parent)
     : Thread(StackDepth, Priority), ParentWorkQueue(Parent)
 {
 }
+
+#endif
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+WorkQueue::CWorkerThread::CWorkerThread(const char * const Name,
+                                        uint16_t StackDepth,
+                                        StackType_t * const StackBuffer,
+                                        UBaseType_t Priority,
+                                        WorkQueue &Parent)
+    : Thread(Name, StackDepth, StackBuffer, Priority), ParentWorkQueue(Parent)
+{
+}
+
+
+WorkQueue::CWorkerThread::CWorkerThread(uint16_t StackDepth,
+                                        StackType_t * const StackBuffer,
+                                        UBaseType_t Priority,
+                                        WorkQueue &Parent)
+    : Thread(StackDepth, StackBuffer, Priority), ParentWorkQueue(Parent)
+{
+}
+
+#endif
 
 
 WorkQueue::CWorkerThread::~CWorkerThread()
@@ -174,7 +222,7 @@ void WorkQueue::CWorkerThread::Run()
         //
         //  Wait forever for work.
         //
-        ParentWorkQueue->WorkItemQueue->Dequeue(&work);
+        ParentWorkQueue.WorkItemQueue.Dequeue(&work);
 
         //
         //  If we dequeue a NULL item, its our sign to exit.
@@ -204,7 +252,6 @@ void WorkQueue::CWorkerThread::Run()
     //
     //  Signal the dtor that the thread is exiting.
     //
-    ParentWorkQueue->ThreadComplete->Give();
+    ParentWorkQueue.ThreadComplete.Give();
 }
-
 

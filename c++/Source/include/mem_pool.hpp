@@ -62,6 +62,10 @@
 #include "FreeRTOS.h"
 #include "mutex.hpp"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
+
 namespace cpp_freertos {
 
 
@@ -149,6 +153,8 @@ class MemoryPool {
     /////////////////////////////////////////////////////////////////////////
     public:
 
+#if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
         /**
          *  Constructor to create a Memory Pool.
          *
@@ -166,6 +172,11 @@ class MemoryPool {
         MemoryPool( int itemSize,
                     int itemCount,
                     int alignment);
+
+#endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+
+
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
 
         /**
          *  Constructor to create a Memory Pool.
@@ -186,6 +197,9 @@ class MemoryPool {
                     void *preallocatedMemory,
                     int preallocatedMemorySize,
                     int alignment);
+
+#endif /* configSUPPORT_STATIC_ALLOCATION */
+
 
         /**
          *  Allows you to add memory to a MemoryPool.
@@ -236,7 +250,7 @@ class MemoryPool {
         /**
          *  Standard Mutex to allow thread safety.
          */
-        Mutex *Lock;
+        MutexStandard Lock;
 
         /**
          *  Save the item size for additions.

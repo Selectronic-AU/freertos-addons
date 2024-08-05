@@ -51,11 +51,20 @@ Timer::Timer(   const char * const TimerName,
                 bool Periodic
                 )
 {
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+    handle = xTimerCreateStatic(  TimerName,
+                                  PeriodInTicks,
+                                  Periodic ? pdTRUE : pdFALSE,
+                                  this,
+                                  TimerCallbackFunctionAdapter,
+                                  &timer_buffer);
+#else
     handle = xTimerCreate(  TimerName,
                             PeriodInTicks,
                             Periodic ? pdTRUE : pdFALSE,
                             this,
                             TimerCallbackFunctionAdapter);
+#endif
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -71,11 +80,20 @@ Timer::Timer(   TickType_t PeriodInTicks,
                 bool Periodic
                 )
 {
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+    handle = xTimerCreateStatic(  "Default",
+                                  PeriodInTicks,
+                                  Periodic ? pdTRUE : pdFALSE,
+                                  this,
+                                  TimerCallbackFunctionAdapter,
+                                  &timer_buffer);
+#elif ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
     handle = xTimerCreate(  "Default",
                             PeriodInTicks,
                             Periodic ? pdTRUE : pdFALSE,
                             this,
                             TimerCallbackFunctionAdapter);
+#endif
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS

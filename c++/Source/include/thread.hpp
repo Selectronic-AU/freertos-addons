@@ -62,6 +62,10 @@
 #include "semaphore.hpp"
 #include "condition_variable.hpp"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
+
 namespace cpp_freertos {
 
 
@@ -87,6 +91,9 @@ class Thread {
     //
     /////////////////////////////////////////////////////////////////////////
     public:
+
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
         /**
          *  Constructor to create a named thread.
          *
@@ -112,6 +119,43 @@ class Thread {
          */
         Thread( uint16_t StackDepth,
                 UBaseType_t Priority);
+
+#endif
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+        /**
+         *  Constructor to create a named thread.
+         *
+         *  @param Name Name of the thread. Only useful for debugging.
+         *  @param StackDepth Number of "words" allocated for the Thread stack.
+         *  @param StackBuffer Pointer to preallocated stack space.
+         *  @param Priority FreeRTOS priority of this Thread.
+         */
+#ifndef CPP_FREERTOS_NO_CPP_STRINGS
+        Thread( const std::string Name,
+                uint16_t StackDepth,
+                StackType_t * const StackBuffer,
+                UBaseType_t Priority);
+#else
+        Thread( const char *Name,
+                uint16_t StackDepth,
+                StackType_t * const StackBuffer,
+                UBaseType_t Priority);
+#endif
+
+        /**
+         *  Constructor to create an unnamed thread.
+         *
+         *  @param StackDepth Number of "words" allocated for the Thread stack.
+         *  @param StackBuffer Pointer to preallocated stack space.
+         *  @param Priority FreeRTOS priority of this Thread.
+         */
+        Thread( uint16_t StackDepth,
+                StackType_t * const StackBuffer,
+                UBaseType_t Priority);
+#endif
+
 
         /**
          *  Starts a thread.
@@ -394,6 +438,18 @@ class Thread {
          *  Stack depth of this Thread, in words.
          */
         const uint16_t StackDepth;
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+        /**
+         * Pointer to preallocated stack space.
+         */
+        StackType_t * const StackBuffer;
+
+        /**
+         * Static task buffer for this Thread.
+         */
+        StaticTask_t TaskBuffer;
+#endif
 
         /**
          *  A saved / cached copy of what the Thread's priority is.

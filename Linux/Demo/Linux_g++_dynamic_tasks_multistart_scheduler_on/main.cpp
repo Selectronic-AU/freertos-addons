@@ -143,7 +143,7 @@ class RootThread : public Thread {
                 switch (count) {
 
                     case 1: {
-                        char nameBuf[10];
+                        char nameBuf[16];
                         sprintf(nameBuf, "dy%d.%d", DelayInSeconds, ++threadCnt);
                         cout << GetName() << " Creating " << nameBuf << endl;
                         dt = new DynamicThread(nameBuf, 1);

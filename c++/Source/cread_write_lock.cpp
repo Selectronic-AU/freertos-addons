@@ -49,7 +49,11 @@ using namespace cpp_freertos;
 ReadWriteLock::ReadWriteLock()
     : ReadCount(0)
 {
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+    ReadLock = xSemaphoreCreateMutexStatic(&ReadLockMutexBuffer);
+#else
     ReadLock = xSemaphoreCreateMutex();
+#endif
     if (ReadLock == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
         throw ReadWriteLockCreateException();
@@ -65,7 +69,11 @@ ReadWriteLock::ReadWriteLock()
     //  of unlocks when multiple threads hold the reader lock. 
     //  Semaphores are not subject to this constraint.
     //
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+    ResourceLock = xSemaphoreCreateBinaryStatic(&ResourceLockSemaphoreBuffer);
+#elif ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
     ResourceLock = xSemaphoreCreateBinary();
+#endif
     if (ResourceLock == NULL) {
         vSemaphoreDelete(ReadLock);
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -131,7 +139,11 @@ ReadWriteLockPreferWriter::ReadWriteLockPreferWriter()
     : ReadWriteLock(),
       WriteCount(0)
 {
+#if( configSUPPORT_STATIC_ALLOCATION == 1 )
+    WriteLock = xSemaphoreCreateMutexStatic(&WriteLockMutexBuffer);
+#else
     WriteLock = xSemaphoreCreateMutex();
+#endif
     if (WriteLock == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
         throw ReadWriteLockCreateException();
@@ -147,7 +159,11 @@ ReadWriteLockPreferWriter::ReadWriteLockPreferWriter()
     //  of unlocks when multiple threads hold the reader lock. 
     //  Semaphores are not subject to this constraint.
     //
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+    BlockReadersLock = xSemaphoreCreateBinaryStatic(&BlockReadersLockSemaphoreBuffer);
+#elif ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
     BlockReadersLock = xSemaphoreCreateBinary();
+#endif
     if (BlockReadersLock == NULL) {
         vSemaphoreDelete(WriteLock);
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS

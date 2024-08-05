@@ -46,24 +46,11 @@ using namespace cpp_freertos;
 
 EventGroup::EventGroup()
 {
-    handle = xEventGroupCreate();
-
-    if (handle == NULL) {
-#ifndef CPP_FREERTOS_NO_EXCEPTIONS
-        throw EventGroupCreateException();
-#else
-        configASSERT(!"EventGroup Constructor Failed");
-#endif
-    }
-
-}
-
-
 #if( configSUPPORT_STATIC_ALLOCATION == 1 )
-
-EventGroup::EventGroup(StaticEventGroup_t *pxEventGroupBuffer)
-{
-    handle = xEventGroupCreateStatic(pxEventGroupBuffer);
+    handle = xEventGroupCreateStatic(&event_group_data);
+#else
+    handle = xEventGroupCreate();
+#endif
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -73,8 +60,6 @@ EventGroup::EventGroup(StaticEventGroup_t *pxEventGroupBuffer)
 #endif
     }
 }
-
-#endif /* configSUPPORT_STATIC_ALLOCATION */
 
 
 EventGroup::~EventGroup()
@@ -115,12 +100,14 @@ EventBits_t EventGroup::ClearBits(const EventBits_t uxBitsToClear)
     return xEventGroupClearBits(handle, uxBitsToClear);
 }
 
+#if ( ( configUSE_TRACE_FACILITY == 1 ) && ( INCLUDE_xTimerPendFunctionCall == 1 ) && ( configUSE_TIMERS == 1 ) )
 
 BaseType_t EventGroup::ClearBitsFromISR(const EventBits_t uxBitsToClear)
 {
     return xEventGroupClearBitsFromISR(handle, uxBitsToClear);
 }
 
+#endif
 
 EventBits_t EventGroup::GetBits()
 {

@@ -63,6 +63,9 @@
 #include "timers.h"
 #include "semphr.h"
 
+#if ( configSUPPORT_STATIC_ALLOCATION != 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION != 1 )
+#error "FreeRTOS-Addons requires either configSUPPORT_STATIC_ALLOCATION or configSUPPORT_DYNAMIC_ALLOCATION"
+#endif
 
 namespace cpp_freertos {
 
@@ -210,6 +213,13 @@ class Tasklet {
          *  Protect against accidental deletion before we were executed.
          */
         SemaphoreHandle_t DtorLock;
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+        /**
+         * Underlying static semaphore.
+         */
+        StaticSemaphore_t DtorLockSemaphoreBuffer;
+#endif
 };
 
 }

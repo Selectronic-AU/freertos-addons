@@ -99,7 +99,11 @@ Semaphore::~Semaphore()
 
 BinarySemaphore::BinarySemaphore(bool set)
 {
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+    handle = xSemaphoreCreateBinaryStatic(&semaphore_buffer);
+#elif ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
     handle = xSemaphoreCreateBinary();
+#endif
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -114,6 +118,7 @@ BinarySemaphore::BinarySemaphore(bool set)
     }
 }
 
+#if ( configUSE_COUNTING_SEMAPHORES == 1 )
 
 CountingSemaphore::CountingSemaphore(UBaseType_t maxCount, UBaseType_t initialCount)
 {
@@ -133,7 +138,11 @@ CountingSemaphore::CountingSemaphore(UBaseType_t maxCount, UBaseType_t initialCo
 #endif
     }
 
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+    handle = xSemaphoreCreateCountingStatic(maxCount, initialCount, &semaphore_buffer);
+#elif ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
     handle = xSemaphoreCreateCounting(maxCount, initialCount);
+#endif
 
     if (handle == NULL) {
 #ifndef CPP_FREERTOS_NO_EXCEPTIONS
@@ -145,3 +154,4 @@ CountingSemaphore::CountingSemaphore(UBaseType_t maxCount, UBaseType_t initialCo
 }
 
 
+#endif  // ( configUSE_COUNTING_SEMAPHORES == 1 )

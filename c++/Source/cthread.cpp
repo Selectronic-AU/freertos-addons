@@ -56,11 +56,16 @@ MutexStandard Thread::StartGuardLock;
 //
 #ifndef CPP_FREERTOS_NO_CPP_STRINGS
 
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
 Thread::Thread( const std::string pcName,
                 uint16_t usStackDepth,
                 UBaseType_t uxPriority)
     :   Name(pcName), 
         StackDepth(usStackDepth), 
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+        StackBuffer(0),
+#endif
         Priority(uxPriority),
         ThreadStarted(false)
 {
@@ -73,7 +78,10 @@ Thread::Thread( const std::string pcName,
 Thread::Thread( uint16_t usStackDepth,
                 UBaseType_t uxPriority)
     :   Name("Default"), 
-        StackDepth(usStackDepth), 
+        StackDepth(usStackDepth),
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+        StackBuffer(0),
+#endif
         Priority(uxPriority),
         ThreadStarted(false)
 {
@@ -82,15 +90,55 @@ Thread::Thread( uint16_t usStackDepth,
 #endif
 }
 
+#endif
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+Thread::Thread( const std::string pcName,
+                uint16_t usStackDepth,
+                StackType_t * const puxStackBuffer,
+                UBaseType_t uxPriority)
+    :   Name(pcName),
+        StackDepth(usStackDepth), 
+        StackBuffer(puxStackBuffer),
+        Priority(uxPriority),
+        ThreadStarted(false)
+{
+#if (INCLUDE_vTaskDelayUntil == 1)
+    delayUntilInitialized = false;
+#endif
+}
+
+
+Thread::Thread( uint16_t usStackDepth,
+                StackType_t * const puxStackBuffer,
+                UBaseType_t uxPriority)
+    :   StackDepth(usStackDepth),
+        StackBuffer(puxStackBuffer),
+        Priority(uxPriority),
+        ThreadStarted(false)
+{
+#if (INCLUDE_vTaskDelayUntil == 1)
+    delayUntilInitialized = false;
+#endif
+}
+
+#endif
+
 //
 //  We do not want to use C++ strings. Fall back to character arrays.
 //
 #else
 
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+
 Thread::Thread( const char *pcName,
                 uint16_t usStackDepth,
                 UBaseType_t uxPriority)
     :   StackDepth(usStackDepth),
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+        StackBuffer(0),
+#endif
         Priority(uxPriority),
         ThreadStarted(false)
 {
@@ -111,6 +159,50 @@ Thread::Thread( const char *pcName,
 Thread::Thread( uint16_t usStackDepth,
                 UBaseType_t uxPriority)
     :   StackDepth(usStackDepth),
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+        StackBuffer(0),
+#endif
+        Priority(uxPriority),
+        ThreadStarted(false)
+{
+    memset(Name, 0, sizeof(Name));
+#if (INCLUDE_vTaskDelayUntil == 1)
+    delayUntilInitialized = false;
+#endif
+}
+
+#endif  // configSUPPORT_DYNAMIC_ALLOCATION
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+Thread::Thread( const char *pcName,
+                uint16_t usStackDepth,
+                StackType_t * const puxStackBuffer,
+                UBaseType_t uxPriority)
+    :   StackDepth(usStackDepth),
+        StackBuffer(puxStackBuffer),
+        Priority(uxPriority),
+        ThreadStarted(false)
+{
+    for (int i = 0; i < configMAX_TASK_NAME_LEN - 1; i++) {
+        Name[i] = *pcName;
+        if (*pcName == 0)
+            break;
+        pcName++;
+    }
+    Name[configMAX_TASK_NAME_LEN - 1] = 0;
+
+#if (INCLUDE_vTaskDelayUntil == 1)
+    delayUntilInitialized = false;
+#endif
+}
+
+
+Thread::Thread( uint16_t usStackDepth,
+                StackType_t * const puxStackBuffer,
+                UBaseType_t uxPriority)
+    :   StackDepth(usStackDepth),
+        StackBuffer(puxStackBuffer),
         Priority(uxPriority),
         ThreadStarted(false)
 {
@@ -121,6 +213,8 @@ Thread::Thread( uint16_t usStackDepth,
 }
 
 #endif
+
+#endif  // CPP_FREERTOS_NO_CPP_STRINGS
 
 
 bool Thread::Start()
@@ -151,8 +245,24 @@ bool Thread::Start()
         else 
             ThreadStarted = true;
     }
-
 #ifndef CPP_FREERTOS_NO_CPP_STRINGS
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+    if (StackBuffer) {
+        handle = xTaskCreateStatic(TaskFunctionAdapter,
+                                   Name.c_str(),
+                                   StackDepth,
+                                   this,
+                                   Priority,
+                                   StackBuffer,
+                                   &TaskBuffer);
+        return handle != nullptr ? true : false;
+    }
+
+#endif
+
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
     BaseType_t rc = xTaskCreate(TaskFunctionAdapter,
                                 Name.c_str(),
@@ -160,7 +270,30 @@ bool Thread::Start()
                                 this,
                                 Priority,
                                 &handle);
+    if (rc == pdPASS) {
+        return true;
+    }
+
+#endif
+
 #else 
+
+#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
+
+    if (StackBuffer) {
+        handle = xTaskCreateStatic(TaskFunctionAdapter,
+                                   Name,
+                                   StackDepth,
+                                   this,
+                                   Priority,
+                                   StackBuffer,
+                                   &TaskBuffer);
+        return handle != nullptr ? true : false;
+    }
+
+#endif
+
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
 
     BaseType_t rc = xTaskCreate(TaskFunctionAdapter,
                                 Name,
@@ -168,9 +301,15 @@ bool Thread::Start()
                                 this,
                                 Priority,
                                 &handle);
+    if (rc == pdPASS) {
+        return true;
+    }
+
 #endif
 
-    return rc != pdPASS ? false : true;
+#endif
+
+    return false;
 }
 
 
