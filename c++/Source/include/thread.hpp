@@ -195,6 +195,9 @@ class Thread {
         /**
          *  Yield the scheduler.
          */
+		#ifdef Yield
+			#undef Yield
+		#endif		 
         static inline void Yield()
         {
             taskYIELD();
