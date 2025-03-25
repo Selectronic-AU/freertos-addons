@@ -325,8 +325,11 @@ void Thread::Cleanup()
 
 Thread::~Thread()
 {
-    vTaskDelete(handle);
-    handle = (TaskHandle_t)-1;
+    if (ThreadStarted) {
+        // thread is only created if it is started so only delete if it was started    
+        vTaskDelete(handle);
+        handle = (TaskHandle_t)-1;
+    }
 }
 
 #else
