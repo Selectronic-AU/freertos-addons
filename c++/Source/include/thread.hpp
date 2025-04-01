@@ -196,8 +196,14 @@ class Thread {
          *  Yield the scheduler.
          */
         #ifdef Yield
-            #undef Yield
-        #endif       
+            // The "winbase.h" header defines Yield as a macro, so we need
+            // to make sure we don't include any WINAPI headers when
+            // compiling this file. This should be handled by the correct
+            // inclusion (or non-inclusion) of headers by the MSVC-MingW
+            // FreeRTOS port (i.e. portmacro.h should be kept free of any
+            // WINAPI pollutions.
+            #error "Yield has been defined as a macro."
+        #endif		 
         static inline void Yield()
         {
             taskYIELD();
