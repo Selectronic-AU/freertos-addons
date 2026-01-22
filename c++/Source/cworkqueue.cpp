@@ -148,13 +148,13 @@ WorkQueue::~WorkQueue()
     //
     //  Send a message that it's time to cleanup.
     //
-    WorkItem *work = NULL;
-    WorkItemQueue.Enqueue(&work);
+    //WorkItem *work = NULL;
+    //WorkItemQueue.Enqueue(&work);
 
     //
     //  Wait until the thread has run enough to signal that it's done.
     //
-    ThreadComplete.Take();
+    //ThreadComplete.Take();
 }
 
 #endif
@@ -254,4 +254,3 @@ void WorkQueue::CWorkerThread::Run()
     //
     ParentWorkQueue.ThreadComplete.Give();
 }
-
