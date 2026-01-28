@@ -247,6 +247,12 @@ void WorkQueue::CWorkerThread::Run()
         if (work->FreeAfterRun()) {
             delete work;
         }
+        else {
+            //
+            // Otherwise, call release() for pool-based work items
+            //
+            work->release();
+        }
     }
 
     //
