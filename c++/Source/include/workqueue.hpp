@@ -109,13 +109,6 @@ class WorkItem {
          */
         virtual void Run() = 0;
 
-        /**
-         *  Called when the WorkItem is complete and should be released.
-         *  Override this if you are using a pool-based allocation.
-         *  Default implementation does nothing.
-         */
-        virtual void release() {}
-
     /////////////////////////////////////////////////////////////////////////
     //
     //  Private API
