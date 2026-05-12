@@ -232,7 +232,7 @@ void WorkQueue::CWorkerThread::Run()
             //
             //  Exit the task loop.
             //
-            break;
+            continue;
         }
 
         //
@@ -254,4 +254,3 @@ void WorkQueue::CWorkerThread::Run()
     //
     ParentWorkQueue.ThreadComplete.Give();
 }
-
