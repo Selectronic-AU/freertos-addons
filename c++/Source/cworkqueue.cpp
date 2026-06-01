@@ -143,18 +143,6 @@ WorkQueue::~WorkQueue()
     //  Note that we cannot flush the queue. If there are items 
     //  in the queue maked freeAfterComplete, we would leak the 
     //  memory. 
-    //
-
-    //
-    //  Send a message that it's time to cleanup.
-    //
-    WorkItem *work = NULL;
-    WorkItemQueue.Enqueue(&work);
-
-    //
-    //  Wait until the thread has run enough to signal that it's done.
-    //
-    ThreadComplete.Take();
 }
 
 #endif
@@ -232,7 +220,7 @@ void WorkQueue::CWorkerThread::Run()
             //
             //  Exit the task loop.
             //
-            break;
+            continue;
         }
 
         //
@@ -254,4 +242,3 @@ void WorkQueue::CWorkerThread::Run()
     //
     ParentWorkQueue.ThreadComplete.Give();
 }
-
