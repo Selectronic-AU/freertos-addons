@@ -326,7 +326,7 @@ void Thread::Cleanup()
 Thread::~Thread()
 {
     if (ThreadStarted && handle != NULL) {
-        // thread is only created if it is started so only delete if it was started    
+        //  Thread is only created if it is started so only delete if it was started.
         vTaskDelete(handle);
         handle = NULL;
     }
@@ -351,13 +351,22 @@ void Thread::TaskFunctionAdapter(void *pvParameters)
 
 #if (INCLUDE_vTaskDelete == 1)
 
+    //  The Cleanup() contract permits `delete this`, so clear the
+    //  handle before task cleanup so the destructor will not delete
+    //  this task.
+    thread->handle = NULL;
+
+    //  Call the cleanup function before deleting the thread.
     thread->Cleanup();
 
-    vTaskDelete(thread->handle);
+    //  Do not touch thread and delete the task itself.
+    vTaskDelete(NULL);
 
 #else
+
     configASSERT( ! "Cannot return from a thread.run function "
                     "if INCLUDE_vTaskDelete is not defined.");
+
 #endif
 }
 
